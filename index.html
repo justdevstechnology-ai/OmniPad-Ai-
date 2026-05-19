@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniPad AI - Tenora Labs</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e1f20">
+    <style>
+        :root {
+            --bg-dark: #131314;
+            --panel-dark: #1e1f20;
+            --txt-light: #e3e3e3;
+            --accent: #4285f4;
+            --border: #444746;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--txt-light);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 260px;
+            background-color: var(--panel-dark);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        .brand {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: var(--accent);
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .history-item {
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            background: #232425;
+        }
+
+        .history-item:hover { background-color: #333537; }
+
+        #main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        /* Header for Mobile controls */
+        #mobile-header {
+            display: none;
+            background: var(--panel-dark);
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px 20% 120px 20%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .user {
+            align-self: flex-end;
+            background-color: #2b2a2a;
+            padding: 12px 18px;
+            border-radius: 18px 18px 0 18px;
+        }
+
+        .ai { align-self: flex-start; line-height: 1.6; }
+
+        #input-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            background-color: var(--panel-dark);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            display: flex;
+            padding: 10px 20px;
+            align-items: center;
+        }
+
+        #user-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--txt-light);
+            font-size: 1rem;
+            outline: none;
+            resize: none;
+            max-height: 100px;
+        }
+
+        #send-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-weight: bold;
+            padding: 0 10px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: #2e7d32;
+        }
+        .offline { background: #c62828; }
+
+        /* Responsive Mobile Layout Breakpoint */
+        @media (max-width: 768px) {
+            #sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+            }
+            #sidebar.open {
+                transform: translateX(0);
+            }
+            #mobile-header { display: flex; }
+            #chat-container { padding: 20px 15px 120px 15px; }
+            #input-container { width: 92%; bottom: 15px; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sidebar">
+        <div class="brand">
+            <span>TENORA LABS</span>
+            <button class="menu-btn" id="close-sidebar" style="display:none;">&times;</button>
+        </div>
+        <div id="network-status" class="status-badge" style="margin-bottom:15px; text-align:center;">Online</div>
+        <button id="new-chat-btn" style="width:100%; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #2b2a2a; color: #fff; cursor: pointer; font-weight:bold;">+ New Chat</button>
+        <h4 style="margin: 20px 0 10px 0; color: #aaa; font-size: 0.85rem;">Recent Activities</h4>
+        <div class="history-list" id="history-list"></div>
+    </div>
+
+    <div id="main-chat">
+        <div id="mobile-header">
+            <button class="menu-btn" id="menu-toggle">&#9776;</button>
+            <strong style="color: var(--accent);">OmniPad AI</strong>
+            <span id="mobile-status" style="font-size:0.8rem; color:#2e7d32;">●</span>
+        </div>
+
+        <div id="chat-container">
+            <div class="message ai">
+                <strong>OmniPad AI</strong>
+                <p>Hello, I am OmniPad AI, compiled by Tenora Labs. Your chats are safely secured offline inside your device.</p>
+            </div>
+        </div>
+
+        <div id="input-container">
+            <textarea id="user-input" rows="1" placeholder="Ask OmniPad AI..."></textarea>
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        let db;
+        let currentSessionId = Date.now().toString(); // Creates a distinct ID for each fresh conversation thread
+
+        // Setup IndexedDB Data Pipeline
+        const request = indexedDB.open("OmniPadDatabase", 1);
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            if (!db.objectStoreNames.contains("conversations")) {
+                db.createObjectStore("conversations", { keyPath: "id" });
+            }
+        };
+        request.onsuccess = (e) => {
+            db = e.target.result;
+            renderHistorySidebar();
+        };
+
+        // Network Monitor
+        window.addEventListener('online', toggleNetwork);
+        window.addEventListener('offline', toggleNetwork);
+        function toggleNetwork() {
+            const badge = document.getElementById('network-status');
+            const dot = document.getElementById('mobile-status');
+            if (navigator.onLine) {
+                badge.textContent = "Online"; badge.classList.remove('offline');
+                dot.style.color = "#2e7d32";
+            } else {
+                badge.textContent = "Offline Mode"; badge.classList.add('offline');
+                dot.style.color = "#c62828";
+            }
+        }
+
+        // Sidebar responsive handlers
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('menu-toggle').addEventListener('click', () => sidebar.classList.add('open'));
+        document.getElementById('close-sidebar').style.display = window.innerWidth <= 768 ? 'block' : 'none';
+        document.getElementById('close-sidebar').addEventListener('click', () => sidebar.classList.remove('open'));
+
+        // Handle Send Operations
+        document.getElementById('send-btn').addEventListener('click', processMessage);
+        document.getElementById('user-input').addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); processMessage(); }
+        });
+
+        // Start a New Clean Chat Thread
+        document.getElementById('new-chat-btn').addEventListener('click', () => {
+            currentSessionId = Date.now().toString();
+            document.getElementById('chat-container').innerHTML = `
+                <div class="message ai">
+                    <strong>OmniPad AI</strong>
+                    <p>Started a fresh chat canvas. How can Tenora Labs help you now?</p>
+                </div>`;
+            sidebar.classList.remove('open');
+        });
+
+        async function processMessage() {
+            const input = document.getElementById('user-input');
+            const promptText = input.value.trim();
+            if(!promptText) return;
+
+            appendMsgUI(promptText, 'user');
+            input.value = '';
+            sidebar.classList.remove('open');
+
+            // Save User Input into Database Archive instantly
+            await writeToDB(currentSessionId, { role: 'user', text: promptText });
+
+            if (navigator.onLine) {
+                try {
+                    // Update this string with your exact Live Render domain string once created
+                    const res = await fetch('https://YOUR-RENDER-APP-NAME.onrender.com/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: promptText })
+                    });
+                    const data = await res.json();
+                    appendMsgUI(data.reply, 'ai');
+                    await writeToDB(currentSessionId, { role: 'ai', text: data.reply });
+                } catch (e) {
+                    appendMsgUI("Couldn't ping Render server layer. Saved prompt to offline activities list.", 'ai');
+                }
+            } else {
+                const offReply = "[Offline Memory Active]: Copied to offline storage arrays. OmniPad will generate replies when connection status resolves.";
+                appendMsgUI(offReply, 'ai');
+                await writeToDB(currentSessionId, { role: 'ai', text: offReply });
+            }
+        }
+
+        function appendMsgUI(text, sender) {
+            const box = document.getElementById('chat-container');
+            const div = document.createElement('div');
+            div.classList.add('message', sender);
+            div.innerHTML = `<strong>${sender === 'user' ? 'You' : 'OmniPad AI'}</strong><p>${text}</p>`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // DB core read/write methods
+        function writeToDB(sessionId, messageBlock) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(["conversations"], "readwrite");
+                const store = tx.objectStore("conversations");
+                const getReq = store.get(sessionId);
+
+                getReq.onsuccess = () => {
+                    let record = getReq.result || { id: sessionId, title: messageBlock.text, logs: [] };
+                    record.logs.push(messageBlock);
+                    store.put(record);
+                    tx.oncomplete = () => { renderHistorySidebar(); resolve(); };
+                };
+            });
+        }
+
+        function renderHistorySidebar() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            const store = db.transaction(["conversations"], "readonly").objectStore("conversations");
+            
+            store.openCursor(null, 'prev').onsuccess = (e) => {
+                const cursor = e.target.result;
+                if(cursor) {
+                    const item = document.createElement('div');
+                    item.classList.add('history-item');
+                    item.textContent = cursor.value.title;
+                    item.onclick = () => loadActiveSession(cursor.value.id);
+                    list.appendChild(item);
+                    cursor.continue();
+                }
+            };
+        }
+
+        function loadActiveSession(sessionId) {
+            currentSessionId = sessionId;
+            const store = db.transaction(["conversations"], "readonly").objectStore("conversations");
+            store.get(sessionId).onsuccess = (e) => {
+                const record = e.target.result;
+                const box = document.getElementById('chat-container');
+                box.innerHTML = '';
+                record.logs.forEach(msg => appendMsgUI(msg.text, msg.role));
+                sidebar.classList.remove('open');
+            };
+        }
+    </script>
+</body>
+  </html>
