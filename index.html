@@ -15,7 +15,9 @@
             --border: #444746;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             margin: 0;
@@ -67,7 +69,9 @@
             background: #232425;
         }
 
-        .history-item:hover { background-color: #333537; }
+        .history-item:hover {
+            background-color: #333537;
+        }
 
         #main-chat {
             flex: 1;
@@ -77,7 +81,6 @@
             position: relative;
         }
 
-        /* Header for Mobile controls */
         #mobile-header {
             display: none;
             background: var(--panel-dark);
@@ -118,7 +121,10 @@
             border-radius: 18px 18px 0 18px;
         }
 
-        .ai { align-self: flex-start; line-height: 1.6; }
+        .ai {
+            align-self: flex-start;
+            line-height: 1.6;
+        }
 
         #input-container {
             position: absolute;
@@ -143,6 +149,7 @@
             outline: none;
             resize: none;
             max-height: 100px;
+            overflow-y: auto;
         }
 
         #send-btn {
@@ -160,9 +167,11 @@
             border-radius: 10px;
             background: #2e7d32;
         }
-        .offline { background: #c62828; }
 
-        /* Responsive Mobile Layout Breakpoint */
+        .offline {
+            background: #c62828;
+        }
+
         @media (max-width: 768px) {
             #sidebar {
                 position: absolute;
@@ -171,30 +180,57 @@
                 bottom: 0;
                 transform: translateX(-100%);
             }
+
             #sidebar.open {
                 transform: translateX(0);
             }
-            #mobile-header { display: flex; }
-            #chat-container { padding: 20px 15px 120px 15px; }
-            #input-container { width: 92%; bottom: 15px; }
+
+            #mobile-header {
+                display: flex;
+            }
+
+            #chat-container {
+                padding: 20px 15px 120px 15px;
+            }
+
+            #input-container {
+                width: 92%;
+                bottom: 15px;
+            }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 <body>
-
     <div id="sidebar">
         <div class="brand">
             <span>TENORA LABS</span>
-            <button class="menu-btn" id="close-sidebar" style="display:none;">&times;</button>
+            <button class="menu-btn" id="close-sidebar">&times;</button>
         </div>
-        <div id="network-status" class="status-badge" style="margin-bottom:15px; text-align:center;">Online</div>
-        <button id="new-chat-btn" style="width:100%; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #2b2a2a; color: #fff; cursor: pointer; font-weight:bold;">+ New Chat</button>
-        <h4 style="margin: 20px 0 10px 0; color: #aaa; font-size: 0.85rem;">Recent Activities</h4>
+
+        <div id="network-status" class="status-badge" style="margin-bottom:15px; text-align:center;">
+            Online
+        </div>
+
+        <button id="new-chat-btn" style="width:100%; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #2b2a2a; color: #fff; cursor: pointer; font-weight:bold;">
+            + New Chat
+        </button>
+
+        <h4 style="margin: 20px 0 10px 0; color: #aaa; font-size: 0.85rem;">
+            Recent Activities
+        </h4>
+
         <div class="history-list" id="history-list"></div>
     </div>
 
@@ -219,130 +255,265 @@
     </div>
 
     <script>
-        let db;
-        let currentSessionId = Date.now().toString(); // Creates a distinct ID for each fresh conversation thread
+        const API_URL = "https://stsnwvlihfwmexivtcjm.supabase.co/functions/v1/hyper-function";
 
-        // Setup IndexedDB Data Pipeline
+           const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0c253dmxpaGZ3bWV4aXZ0Y2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzQ4OTAsImV4cCI6MjA5NDgxMDg5MH0.VSl8Qnd6lLmoka2m9l2Z5zd_dQrHPslnfuLQhVGdmp8";
+
+        let db = null;
+        let currentSessionId = Date.now().toString();
+
         const request = indexedDB.open("OmniPadDatabase", 1);
+
         request.onupgradeneeded = (e) => {
             db = e.target.result;
+
             if (!db.objectStoreNames.contains("conversations")) {
                 db.createObjectStore("conversations", { keyPath: "id" });
             }
         };
+
         request.onsuccess = (e) => {
             db = e.target.result;
             renderHistorySidebar();
         };
 
-        // Network Monitor
+        request.onerror = (e) => {
+            console.error("IndexedDB failed:", e);
+        };
+
         window.addEventListener('online', toggleNetwork);
         window.addEventListener('offline', toggleNetwork);
+
         function toggleNetwork() {
             const badge = document.getElementById('network-status');
             const dot = document.getElementById('mobile-status');
+
             if (navigator.onLine) {
-                badge.textContent = "Online"; badge.classList.remove('offline');
+                badge.textContent = "Online";
+                badge.classList.remove('offline');
                 dot.style.color = "#2e7d32";
             } else {
-                badge.textContent = "Offline Mode"; badge.classList.add('offline');
+                badge.textContent = "Offline Mode";
+                badge.classList.add('offline');
                 dot.style.color = "#c62828";
             }
         }
 
-        // Sidebar responsive handlers
-        const sidebar = document.getElementById('sidebar');
-        document.getElementById('menu-toggle').addEventListener('click', () => sidebar.classList.add('open'));
-        document.getElementById('close-sidebar').style.display = window.innerWidth <= 768 ? 'block' : 'none';
-        document.getElementById('close-sidebar').addEventListener('click', () => sidebar.classList.remove('open'));
+        toggleNetwork();
 
-        // Handle Send Operations
-        document.getElementById('send-btn').addEventListener('click', processMessage);
-        document.getElementById('user-input').addEventListener('keydown', (e) => {
-            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); processMessage(); }
+        const sidebar = document.getElementById('sidebar');
+
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+            sidebar.classList.add('open');
         });
 
-        // Start a New Clean Chat Thread
+        document.getElementById('close-sidebar').addEventListener('click', () => {
+            sidebar.classList.remove('open');
+        });
+
+        function updateSidebarButton() {
+            document.getElementById('close-sidebar').style.display =
+                window.innerWidth <= 768 ? 'block' : 'none';
+        }
+
+        updateSidebarButton();
+        window.addEventListener('resize', updateSidebarButton);
+
+        document.getElementById('send-btn').addEventListener('click', processMessage);
+
+        document.getElementById('user-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                processMessage();
+            }
+        });
+
+        const textarea = document.getElementById('user-input');
+
+        textarea.addEventListener('input', () => {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        });
+
         document.getElementById('new-chat-btn').addEventListener('click', () => {
             currentSessionId = Date.now().toString();
-            document.getElementById('chat-container').innerHTML = `
-                <div class="message ai">
-                    <strong>OmniPad AI</strong>
-                    <p>Started a fresh chat canvas. How can Tenora Labs help you now?</p>
-                </div>`;
+
+            const box = document.getElementById('chat-container');
+            box.innerHTML = '';
+
+            appendMsgUI(
+                'Started a fresh chat canvas. How can Tenora Labs help you now?',
+                'ai'
+            );
+
             sidebar.classList.remove('open');
         });
 
         async function processMessage() {
             const input = document.getElementById('user-input');
             const promptText = input.value.trim();
-            if(!promptText) return;
+
+            if (!promptText) return;
 
             appendMsgUI(promptText, 'user');
+
             input.value = '';
+            input.style.height = 'auto';
+
             sidebar.classList.remove('open');
 
-            // Save User Input into Database Archive instantly
-            await writeToDB(currentSessionId, { role: 'user', text: promptText });
+            if (db) {
+                await writeToDB(currentSessionId, {
+                    role: 'user',
+                    text: promptText
+                });
+            }
 
             if (navigator.onLine) {
                 try {
-                    // Update this string with your exact Live Render domain string once created
-                    const res = await fetch('https://YOUR-RENDER-APP-NAME.onrender.com/api/chat', {
+                    const res = await fetch(API_URL, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ prompt: promptText })
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        },
+                        body: JSON.stringify({
+                            message: promptText
+                        })
                     });
-                    const data = await res.json();
-                    appendMsgUI(data.reply, 'ai');
-                    await writeToDB(currentSessionId, { role: 'ai', text: data.reply });
+
+                    if (!res.ok) {
+                        throw new Error(`HTTP error ${res.status}`);
+                    }
+
+                    let data;
+
+                    try {
+                        data = await res.json();
+                    } catch {
+                        throw new Error('Invalid JSON response from API');
+                    }
+
+                    const reply =
+                        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+                        data?.reply ||
+                        data?.message ||
+                        'No response';
+
+                    appendMsgUI(reply, 'ai');
+
+                    if (db) {
+                        await writeToDB(currentSessionId, {
+                            role: 'ai',
+                            text: reply
+                        });
+                    }
                 } catch (e) {
-                    appendMsgUI("Couldn't ping Render server layer. Saved prompt to offline activities list.", 'ai');
+                    console.error(e);
+
+                    const errorMessage = 'Could not reach AI service. Please try again.';
+
+                    appendMsgUI(errorMessage, 'ai');
+
+                    if (db) {
+                        await writeToDB(currentSessionId, {
+                            role: 'ai',
+                            text: errorMessage
+                        });
+                    }
                 }
             } else {
-                const offReply = "[Offline Memory Active]: Copied to offline storage arrays. OmniPad will generate replies when connection status resolves.";
+                const offReply = '[Offline]: Saved to storage. Will respond when online.';
+
                 appendMsgUI(offReply, 'ai');
-                await writeToDB(currentSessionId, { role: 'ai', text: offReply });
+
+                if (db) {
+                    await writeToDB(currentSessionId, {
+                        role: 'ai',
+                        text: offReply
+                    });
+                }
             }
         }
 
         function appendMsgUI(text, sender) {
             const box = document.getElementById('chat-container');
+
             const div = document.createElement('div');
             div.classList.add('message', sender);
-            div.innerHTML = `<strong>${sender === 'user' ? 'You' : 'OmniPad AI'}</strong><p>${text}</p>`;
+
+            const strong = document.createElement('strong');
+            strong.textContent = sender === 'user' ? 'You' : 'OmniPad AI';
+
+            const p = document.createElement('p');
+            p.textContent = text;
+
+            div.appendChild(strong);
+            div.appendChild(p);
+
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
         }
 
-        // DB core read/write methods
         function writeToDB(sessionId, messageBlock) {
             return new Promise((resolve) => {
-                const tx = db.transaction(["conversations"], "readwrite");
-                const store = tx.objectStore("conversations");
+                if (!db) {
+                    console.warn('Database not ready');
+                    resolve();
+                    return;
+                }
+
+                const tx = db.transaction(['conversations'], 'readwrite');
+                const store = tx.objectStore('conversations');
                 const getReq = store.get(sessionId);
 
                 getReq.onsuccess = () => {
-                    let record = getReq.result || { id: sessionId, title: messageBlock.text, logs: [] };
-                    record.logs.push(messageBlock);
+                    let record = getReq.result || {
+                        id: sessionId,
+                        title: messageBlock.text.slice(0, 40),
+                        logs: []
+                    };
+
+                    record.logs.push({
+                        ...messageBlock,
+                        time: Date.now()
+                    });
+
                     store.put(record);
-                    tx.oncomplete = () => { renderHistorySidebar(); resolve(); };
+                };
+
+                tx.oncomplete = () => {
+                    renderHistorySidebar();
+                    resolve();
+                };
+
+                tx.onerror = () => {
+                    console.error('Transaction failed');
+                    resolve();
                 };
             });
         }
 
         function renderHistorySidebar() {
+            if (!db) return;
+
             const list = document.getElementById('history-list');
             list.innerHTML = '';
-            const store = db.transaction(["conversations"], "readonly").objectStore("conversations");
-            
+
+            const store = db
+                .transaction(['conversations'], 'readonly')
+                .objectStore('conversations');
+
             store.openCursor(null, 'prev').onsuccess = (e) => {
                 const cursor = e.target.result;
-                if(cursor) {
+
+                if (cursor) {
                     const item = document.createElement('div');
                     item.classList.add('history-item');
-                    item.textContent = cursor.value.title;
+                    item.textContent = cursor.value.title || 'Untitled Chat';
+
                     item.onclick = () => loadActiveSession(cursor.value.id);
+
                     list.appendChild(item);
                     cursor.continue();
                 }
@@ -350,16 +521,31 @@
         }
 
         function loadActiveSession(sessionId) {
+            if (!db) return;
+
             currentSessionId = sessionId;
-            const store = db.transaction(["conversations"], "readonly").objectStore("conversations");
+
+            const store = db
+                .transaction(['conversations'], 'readonly')
+                .objectStore('conversations');
+
             store.get(sessionId).onsuccess = (e) => {
                 const record = e.target.result;
+
+                if (!record || !record.logs) {
+                    return;
+                }
+
                 const box = document.getElementById('chat-container');
                 box.innerHTML = '';
-                record.logs.forEach(msg => appendMsgUI(msg.text, msg.role));
+
+                record.logs.forEach(msg => {
+                    appendMsgUI(msg.text, msg.role);
+                });
+
                 sidebar.classList.remove('open');
             };
         }
     </script>
 </body>
-  </html>
+</html>
