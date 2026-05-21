@@ -6,6 +6,8 @@
     <title>OmniPad AI - Tenora Labs</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e1f20">
+    <!-- Load the official lightweight Marked engine for structures -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
     <style>
         :root {
             --bg-dark: #131314;
@@ -15,13 +17,11 @@
             --border: #444746;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-dark);
             color: var(--txt-light);
             display: flex;
@@ -69,9 +69,7 @@
             background: #232425;
         }
 
-        .history-item:hover {
-            background-color: #333537;
-        }
+        .history-item:hover { background-color: #333537; }
 
         #main-chat {
             flex: 1;
@@ -121,9 +119,55 @@
             border-radius: 18px 18px 0 18px;
         }
 
-        .ai {
-            align-self: flex-start;
-            line-height: 1.6;
+        .ai { 
+            align-self: flex-start; 
+            line-height: 1.6; 
+            width: 100%;
+        }
+
+        /* Structured Markdown Sub-styling */
+        .ai p { margin: 0 0 10px 0; }
+        .ai ul, .ai ol { margin: 0 0 10px 0; padding-left: 20px; }
+        .ai code { background: #2b2a2a; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+        
+        /* Gemini-Style Structured Code Blocks */
+        .code-block-wrapper {
+            background: #0f0f10;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .code-block-header {
+            background: #1e1f20;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #aaa;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .copy-code-btn {
+            background: #2b2a2a;
+            border: 1px solid var(--border);
+            color: var(--txt-light);
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .copy-code-btn:active { background: var(--accent); }
+
+        .code-block-wrapper pre {
+            margin: 0;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
         }
 
         #input-container {
@@ -149,7 +193,6 @@
             outline: none;
             resize: none;
             max-height: 100px;
-            overflow-y: auto;
         }
 
         #send-btn {
@@ -167,70 +210,35 @@
             border-radius: 10px;
             background: #2e7d32;
         }
-
-        .offline {
-            background: #c62828;
-        }
+        .offline { background: #c62828; }
 
         @media (max-width: 768px) {
             #sidebar {
-                position: absolute;
-                left: 0;
-                top: 0;
-                bottom: 0;
+                position: absolute; left: 0; top: 0; bottom: 0;
                 transform: translateX(-100%);
             }
-
-            #sidebar.open {
-                transform: translateX(0);
-            }
-
-            #mobile-header {
-                display: flex;
-            }
-
-            #chat-container {
-                padding: 20px 15px 120px 15px;
-            }
-
-            #input-container {
-                width: 92%;
-                bottom: 15px;
-            }
+            #sidebar.open { transform: translateX(0); }
+            #mobile-header { display: flex; }
+            #chat-container { padding: 20px 15px 120px 15px; }
+            #input-container { width: 92%; bottom: 15px; }
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
+
     <div id="sidebar">
         <div class="brand">
             <span>TENORA LABS</span>
-            <button class="menu-btn" id="close-sidebar">&times;</button>
+            <button class="menu-btn" id="close-sidebar" style="display:none;">&times;</button>
         </div>
-
-        <div id="network-status" class="status-badge" style="margin-bottom:15px; text-align:center;">
-            Online
-        </div>
-
-        <button id="new-chat-btn" style="width:100%; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #2b2a2a; color: #fff; cursor: pointer; font-weight:bold;">
-            + New Chat
-        </button>
-
-        <h4 style="margin: 20px 0 10px 0; color: #aaa; font-size: 0.85rem;">
-            Recent Activities
-        </h4>
-
+        <div id="network-status" class="status-badge" style="margin-bottom:15px; text-align:center;">Online</div>
+        <button id="new-chat-btn" style="width:100%; padding: 12px; border-radius: 20px; border: 1px solid var(--border); background: #2b2a2a; color: #fff; cursor: pointer; font-weight:bold;">+ New Chat</button>
+        <h4 style="margin: 20px 0 10px 0; color: #aaa; font-size: 0.85rem;">Recent Activities</h4>
         <div class="history-list" id="history-list"></div>
     </div>
 
@@ -244,7 +252,7 @@
         <div id="chat-container">
             <div class="message ai">
                 <strong>OmniPad AI</strong>
-                <p>Hello, I am OmniPad AI, compiled by Tenora Labs. Your chats are safely secured offline inside your device.</p>
+                <p>Hello, I am OmniPad AI, compiled by Tenora Labs. Structure parsing and dynamic code features are fully initialized.</p>
             </div>
         </div>
 
@@ -255,265 +263,159 @@
     </div>
 
     <script>
-        const API_URL = "https://stsnwvlihfwmexivtcjm.supabase.co/functions/v1/hyper-function";
-
-           const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0c253dmxpaGZ3bWV4aXZ0Y2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzQ4OTAsImV4cCI6MjA5NDgxMDg5MH0.VSl8Qnd6lLmoka2m9l2Z5zd_dQrHPslnfuLQhVGdmp8";
-
-        let db = null;
+        let db;
         let currentSessionId = Date.now().toString();
 
-        const request = indexedDB.open("OmniPadDatabase", 1);
+        // Configure Marked Renderer for structural code styling
+        const renderer = new marked.Renderer();
+        renderer.code = function(code, infostring) {
+            const lang = infostring || 'code';
+            const cleanCode = code.replace(/"/g, '&quot;');
+            return `
+                <div class="code-block-wrapper">
+                    <div class="code-block-header">
+                        <span>${lang}</span>
+                        <button class="copy-code-btn" onclick="copySnippet(this)">Copy</button>
+                    </div>
+                    <pre><code>${code}</code></pre>
+                </div>
+            `;
+        };
+        marked.setOptions({ renderer: renderer, breaks: true });
 
+        // Global Copy Function Engine
+        window.copySnippet = function(button) {
+            const preElement = button.parentElement.nextElementSibling;
+            const codeText = preElement.textContent;
+            
+            navigator.clipboard.writeText(codeText).then(() => {
+                button.textContent = "Copied!";
+                button.style.background = "#2e7d32";
+                setTimeout(() => {
+                    button.textContent = "Copy";
+                    button.style.background = "#2b2a2a";
+                }, 2000);
+            });
+        };
+
+        // Initialize Local Storage Arrays
+        const request = indexedDB.open("OmniPadStructuredDB", 1);
         request.onupgradeneeded = (e) => {
             db = e.target.result;
-
             if (!db.objectStoreNames.contains("conversations")) {
                 db.createObjectStore("conversations", { keyPath: "id" });
             }
         };
+        request.onsuccess = (e) => { db = e.target.result; renderHistorySidebar(); };
 
-        request.onsuccess = (e) => {
-            db = e.target.result;
-            renderHistorySidebar();
-        };
-
-        request.onerror = (e) => {
-            console.error("IndexedDB failed:", e);
-        };
-
+        // Network Status Observers
         window.addEventListener('online', toggleNetwork);
         window.addEventListener('offline', toggleNetwork);
-
         function toggleNetwork() {
             const badge = document.getElementById('network-status');
             const dot = document.getElementById('mobile-status');
-
             if (navigator.onLine) {
-                badge.textContent = "Online";
-                badge.classList.remove('offline');
+                badge.textContent = "Online"; badge.classList.remove('offline');
                 dot.style.color = "#2e7d32";
             } else {
-                badge.textContent = "Offline Mode";
-                badge.classList.add('offline');
+                badge.textContent = "Offline Mode"; badge.classList.add('offline');
                 dot.style.color = "#c62828";
             }
         }
 
-        toggleNetwork();
-
+        // Drawer Event Wireframes
         const sidebar = document.getElementById('sidebar');
-
-        document.getElementById('menu-toggle').addEventListener('click', () => {
-            sidebar.classList.add('open');
-        });
-
-        document.getElementById('close-sidebar').addEventListener('click', () => {
-            sidebar.classList.remove('open');
-        });
-
-        function updateSidebarButton() {
-            document.getElementById('close-sidebar').style.display =
-                window.innerWidth <= 768 ? 'block' : 'none';
-        }
-
-        updateSidebarButton();
-        window.addEventListener('resize', updateSidebarButton);
+        document.getElementById('menu-toggle').addEventListener('click', () => sidebar.classList.add('open'));
+        document.getElementById('close-sidebar').style.display = window.innerWidth <= 768 ? 'block' : 'none';
+        document.getElementById('close-sidebar').addEventListener('click', () => sidebar.classList.remove('open'));
 
         document.getElementById('send-btn').addEventListener('click', processMessage);
-
         document.getElementById('user-input').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                processMessage();
-            }
-        });
-
-        const textarea = document.getElementById('user-input');
-
-        textarea.addEventListener('input', () => {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
+            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); processMessage(); }
         });
 
         document.getElementById('new-chat-btn').addEventListener('click', () => {
             currentSessionId = Date.now().toString();
-
-            const box = document.getElementById('chat-container');
-            box.innerHTML = '';
-
-            appendMsgUI(
-                'Started a fresh chat canvas. How can Tenora Labs help you now?',
-                'ai'
-            );
-
+            document.getElementById('chat-container').innerHTML = `
+                <div class="message ai">
+                    <strong>OmniPad AI</strong>
+                    <p>Started a fresh conversation canvas.</p>
+                </div>`;
             sidebar.classList.remove('open');
         });
 
         async function processMessage() {
             const input = document.getElementById('user-input');
             const promptText = input.value.trim();
-
-            if (!promptText) return;
+            if(!promptText) return;
 
             appendMsgUI(promptText, 'user');
-
             input.value = '';
-            input.style.height = 'auto';
-
             sidebar.classList.remove('open');
 
-            if (db) {
-                await writeToDB(currentSessionId, {
-                    role: 'user',
-                    text: promptText
-                });
-            }
+            await writeToDB(currentSessionId, { role: 'user', text: promptText });
 
             if (navigator.onLine) {
                 try {
-                    const res = await fetch(API_URL, {
+                    // Update this string with your exact Live Render domain string once created
+                    const res = await fetch('https://YOUR-RENDER-APP-NAME.onrender.com/api/chat', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                        },
-                        body: JSON.stringify({
-                            message: promptText
-                        })
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: promptText })
                     });
-
-                    if (!res.ok) {
-                        throw new Error(`HTTP error ${res.status}`);
-                    }
-
-                    let data;
-
-                    try {
-                        data = await res.json();
-                    } catch {
-                        throw new Error('Invalid JSON response from API');
-                    }
-
-                    const reply =
-                        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-                        data?.reply ||
-                        data?.message ||
-                        'No response';
-
-                    appendMsgUI(reply, 'ai');
-
-                    if (db) {
-                        await writeToDB(currentSessionId, {
-                            role: 'ai',
-                            text: reply
-                        });
-                    }
+                    const data = await res.json();
+                    appendMsgUI(data.reply, 'ai');
+                    await writeToDB(currentSessionId, { role: 'ai', text: data.reply });
                 } catch (e) {
-                    console.error(e);
-
-                    const errorMessage = 'Could not reach AI service. Please try again.';
-
-                    appendMsgUI(errorMessage, 'ai');
-
-                    if (db) {
-                        await writeToDB(currentSessionId, {
-                            role: 'ai',
-                            text: errorMessage
-                        });
-                    }
+                    appendMsgUI("Could not access Tenora back-end stream.", 'ai');
                 }
             } else {
-                const offReply = '[Offline]: Saved to storage. Will respond when online.';
-
+                const offReply = "Saved prompt locally. Response arrays will parse once internet access is restored.";
                 appendMsgUI(offReply, 'ai');
-
-                if (db) {
-                    await writeToDB(currentSessionId, {
-                        role: 'ai',
-                        text: offReply
-                    });
-                }
+                await writeToDB(currentSessionId, { role: 'ai', text: offReply });
             }
         }
 
         function appendMsgUI(text, sender) {
             const box = document.getElementById('chat-container');
-
             const div = document.createElement('div');
             div.classList.add('message', sender);
-
-            const strong = document.createElement('strong');
-            strong.textContent = sender === 'user' ? 'You' : 'OmniPad AI';
-
-            const p = document.createElement('p');
-            p.textContent = text;
-
-            div.appendChild(strong);
-            div.appendChild(p);
-
+            
+            // Render User text normally, parse AI text through Marked structure engine
+            const htmlContent = sender === 'user' ? `<p>${text}</p>` : marked.parse(text);
+            
+            div.innerHTML = `<strong>${sender === 'user' ? 'You' : 'OmniPad AI'}</strong><div>${htmlContent}</div>`;
             box.appendChild(div);
             box.scrollTop = box.scrollHeight;
         }
 
         function writeToDB(sessionId, messageBlock) {
             return new Promise((resolve) => {
-                if (!db) {
-                    console.warn('Database not ready');
-                    resolve();
-                    return;
-                }
-
-                const tx = db.transaction(['conversations'], 'readwrite');
-                const store = tx.objectStore('conversations');
+                const tx = db.transaction(["conversations"], "readwrite");
+                const store = tx.objectStore("conversations");
                 const getReq = store.get(sessionId);
 
                 getReq.onsuccess = () => {
-                    let record = getReq.result || {
-                        id: sessionId,
-                        title: messageBlock.text.slice(0, 40),
-                        logs: []
-                    };
-
-                    record.logs.push({
-                        ...messageBlock,
-                        time: Date.now()
-                    });
-
+                    let record = getReq.result || { id: sessionId, title: messageBlock.text, logs: [] };
+                    record.logs.push(messageBlock);
                     store.put(record);
-                };
-
-                tx.oncomplete = () => {
-                    renderHistorySidebar();
-                    resolve();
-                };
-
-                tx.onerror = () => {
-                    console.error('Transaction failed');
-                    resolve();
+                    tx.oncomplete = () => { renderHistorySidebar(); resolve(); };
                 };
             });
         }
 
         function renderHistorySidebar() {
-            if (!db) return;
-
             const list = document.getElementById('history-list');
             list.innerHTML = '';
-
-            const store = db
-                .transaction(['conversations'], 'readonly')
-                .objectStore('conversations');
-
+            const store = db.transaction(["conversations"], "readonly").objectStore("conversations");
+            
             store.openCursor(null, 'prev').onsuccess = (e) => {
                 const cursor = e.target.result;
-
-                if (cursor) {
+                if(cursor) {
                     const item = document.createElement('div');
                     item.classList.add('history-item');
-                    item.textContent = cursor.value.title || 'Untitled Chat';
-
+                    item.textContent = cursor.value.title;
                     item.onclick = () => loadActiveSession(cursor.value.id);
-
                     list.appendChild(item);
                     cursor.continue();
                 }
@@ -521,31 +423,17 @@
         }
 
         function loadActiveSession(sessionId) {
-            if (!db) return;
-
             currentSessionId = sessionId;
-
-            const store = db
-                .transaction(['conversations'], 'readonly')
-                .objectStore('conversations');
-
+            const store = db.transaction(["conversations"], "readonly").objectStore("conversations");
             store.get(sessionId).onsuccess = (e) => {
                 const record = e.target.result;
-
-                if (!record || !record.logs) {
-                    return;
-                }
-
                 const box = document.getElementById('chat-container');
                 box.innerHTML = '';
-
-                record.logs.forEach(msg => {
-                    appendMsgUI(msg.text, msg.role);
-                });
-
+                record.logs.forEach(msg => appendMsgUI(msg.text, msg.role));
                 sidebar.classList.remove('open');
             };
         }
     </script>
 </body>
-</html>
+    </html>
+            
