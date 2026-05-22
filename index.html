@@ -540,3 +540,25 @@
                     const cancelPress = () => {
                         clearTimeout(pressTimer);
        
+                    list.appendChild(item);
+                    cursor.continue();
+                }
+            };
+        }
+
+        function loadActiveSession(sessionId) {
+            currentSessionId = sessionId;
+            const store = db.transaction(["conversations"], "readonly").objectStore("conversations");
+            store.get(sessionId).onsuccess = (e) => {
+                const record = e.target.result;
+                if(!record) return;
+                const box = document.getElementById('chat-container');
+                box.innerHTML = '';
+                record.logs.forEach(msg => appendMsgUI(msg.text, msg.role));
+                sidebar.classList.remove('open');
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
+            };
+        }
+    </script>
+</body>
+</html>
