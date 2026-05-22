@@ -6,7 +6,6 @@
     <title>OmniPad AI - Tenora Labs</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e1f20">
-    <!-- Load the official lightweight Marked engine for structures -->
     <script src="https://cdn.jsdelivr.net/npm/marked/lib/marked.umd.js"></script>
     <style>
         :root {
@@ -270,7 +269,6 @@
         const renderer = new marked.Renderer();
         renderer.code = function(code, infostring) {
             const lang = infostring || 'code';
-            const cleanCode = code.replace(/"/g, '&quot;');
             return `
                 <div class="code-block-wrapper">
                     <div class="code-block-header">
@@ -357,17 +355,25 @@
 
             if (navigator.onLine) {
                 try {
-                    // Update this string with your exact Live Render domain string once created
-                    const res = await fetch('https://YOUR-RENDER-APP-NAME.onrender.com/api/chat', {
+                    // LINK DIRECTLY POINTING TO YOUR SUPABASE EDGE FUNCTION PIPELINE
+                    const res = await fetch('https://stsnwvlihfwmexivtcjm.supabase.co/functions/v1/hyper-function', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer EyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0c253dmxpaGZ3bWV4aXZ0Y2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzQ4OTAsImV4cCI6MjA5NDgxMDg5MH0.VSl8Qnd6lLmoka2m9l2Z5zd_dQrHPslnfuLQhVGdmp8'
+                        },
                         body: JSON.stringify({ prompt: promptText })
                     });
                     const data = await res.json();
-                    appendMsgUI(data.reply, 'ai');
-                    await writeToDB(currentSessionId, { role: 'ai', text: data.reply });
+                    
+                    if (data.error) {
+                        appendMsgUI("Engine Error: " + data.error, 'ai');
+                    } else {
+                        appendMsgUI(data.reply, 'ai');
+                        await writeToDB(currentSessionId, { role: 'ai', text: data.reply });
+                    }
                 } catch (e) {
-                    appendMsgUI("Could not access Tenora back-end stream.", 'ai');
+                    appendMsgUI("Could not establish handshake with Supabase edge gateway.", 'ai');
                 }
             } else {
                 const offReply = "Saved prompt locally. Response arrays will parse once internet access is restored.";
@@ -381,7 +387,6 @@
             const div = document.createElement('div');
             div.classList.add('message', sender);
             
-            // Render User text normally, parse AI text through Marked structure engine
             const htmlContent = sender === 'user' ? `<p>${text}</p>` : marked.parse(text);
             
             div.innerHTML = `<strong>${sender === 'user' ? 'You' : 'OmniPad AI'}</strong><div>${htmlContent}</div>`;
@@ -406,6 +411,7 @@
 
         function renderHistorySidebar() {
             const list = document.getElementById('history-list');
+            if(!list) return;
             list.innerHTML = '';
             const store = db.transaction(["conversations"], "readonly").objectStore("conversations");
             
@@ -436,4 +442,4 @@
     </script>
 </body>
     </html>
-            
+                
