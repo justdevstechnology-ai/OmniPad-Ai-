@@ -2,7 +2,6 @@
 // 🛰️ SUPABASE CONFIGURATION LAYER
 // ==========================================
 const SUPABASE_URL = 'https://stsnwvlihfwmexivtcjm.supabase.co';
-// Replace this with your actual secure Project API Anon Token inside your dashboard
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0c253dmxpaGZ3bWV4aXZ0Y2ptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyMzQ4OTAsImV4cCI6MjA5NDgxMDg5MH0.VSl8Qnd6lLmoka2m9l2Z5zd_dQrHPslnfuLQhVGdmp8'; 
 const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
