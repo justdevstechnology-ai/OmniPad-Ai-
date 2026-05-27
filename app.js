@@ -412,3 +412,14 @@ function loadActiveSession(sessionId) {
         sidebar.classList.remove('open');
     };
 }
+
+// =======================================================
+// 📲 NATIVE PROGRESSIVE WEB APP REGISTRATION ENGINE
+// =======================================================
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("service-worker.js")
+            .then((reg) => console.log("Service Worker active under pipeline scope:", reg.scope))
+            .catch((err) => console.error("Worker core failed registration protocol:", err));
+    });
+}
