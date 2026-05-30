@@ -1,25 +1,27 @@
-# OmniPad AI 🚀
-### Compiled by Tenora Lab
+# OmniPad AI — Powered by Tenora Labs
 
-OmniPad AI is a premium, ultra-responsive Progressive Web App (PWA) engineering environment optimized for mobile viewports. Designed with a clean, cinematic dark mode palette, it features strong security protocols, client-side persistence matrices, and streaming backend conversational intelligence channels.
+OmniPad AI is a premium, high-performance Progressive Web Application (PWA) designed as an advanced operational workspace. Built on an asynchronous standalone client shell, OmniPad provides multi-modal data processing and deep historical session persistence, wrapped in an elegant dark neon visual interface.
 
 ---
 
-## 💎 Core Architecture Capabilities
+## 🚀 Core Systems Architecture
 
-* **Firebase Core Security Pipeline:** Outfitted with official Firebase v10 Authentication handlers executing client-side Google OAuth redirects.
-* **Smart Typing & User Scroll Control:** Native tokenization streaming via marked renderer parsing structures with intuitive browser scrolling safeguards that prevent text jumping while a user is reading or dragging the workspace.
-* **IndexedDB Local Storage:** Full offline persistence architecture syncing active workflows into client-side data stores with tap-and-hold deletion mechanics for quick log cleanup.
-* **Progressive Web App Native Utility:** Integrated manifests and background worker layers mapping cached assets for direct cellular home screen installations.
-* **Node.js Environment Structuring:** Backed by an organized dependency manifest allowing server deployments across container systems.
+* **Typewriter AI Streaming Engine:** Features responsive chunk-rendering parameters leveraging Markdown interpretation (`marked.umd.js`) and inline code-block containment blocks with zero-latency visual transitions.
+* **Persistent Offline Architecture:** Orchestrated utilizing a native client-side `IndexedDB` vector (`OmniPadStructuredDB`) ensuring chat history retention across application cycles.
+* **Progressive Web App Implementation:** Backed by an intelligent lifecycle Service Worker tracking custom multi-level cache maps (`v2`), utilizing immediate context takeovers (`clients.claim()`) and skip execution barriers for installation on mobile devices.
+* **Dynamic Localized Economy Control:** Full multi-currency monetization ledger (`billing.js`) integrated seamlessly with Firebase Firestore tracking real-time usage parameters. Supports automated countdown cycles for unlimited daily, weekly, or monthly subscription keys.
+* **Secure Payment Infrastructures:** Outfitted with robust test/live hooks invoking the Paystack API inline processing window for seamless checkouts in local regional currencies (NGN, USD, GHS, KES, etc.).
 
-## 🛠️ Project Directory Tree
+---
+
+## 📂 File Structure Layout
 
 ```text
-📁 OmniPad-AI/
-├── 📄 index.html          # Application UI Layout & Viewport Rules
-├── 📄 app.js              # State Controller & Authentication Pipeline
-├── 📄 manifest.json       # PWA Application Context Profiles
-├── 📄 service-worker.js   # Client-Side Caching Engine
-├── 📄 package.json        # Server Environment Node Dependencies
-└── 📄 server.js           # Server Edge Processing Pipeline
+├── index.html            # Main interface shell, CSS system typography, and layout nodes
+├── app.js                # Core controller, Firebase routing protocols, and UI handlers
+├── billing.js            # Monetization layer, regional profile maps, and Paystack pipelines
+├── manifest.json         # PWA installation parameters and maskable branding metadata
+├── service-worker.js     # Intercept network guardrails, cache maps, and offline fallback maps
+└── icons/                # High-definition low-poly PWA brand assets
+    ├── lion-poly-192.png # 192x192 mobile app drawer icon
+    └── lion-poly-512.png # 512x512 splash page launch graphic
